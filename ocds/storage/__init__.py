@@ -1,3 +1,4 @@
-from .backends.couch import CouchStorage
+from .backends.couch import TendersStorage, ReleasesStorage
+from .backends.fs import FSStorage
 
-__all__ = [CouchStorage]
+__all__ = [TendersStorage, ReleasesStorage, FSStorage]
