@@ -52,7 +52,7 @@ class FSStorage(Storage):
         if not self._check(key):
             key = self._find(key)
         if not key:
-                raise DocumentNotFound
+            raise DocumentNotFound
         return self._load(key)
 
     def __setitem__(self, key, value):
@@ -61,9 +61,14 @@ class FSStorage(Storage):
     def __len__(self):
         return len([x for x in self._walk()])
 
-    def _write(self, obj):
-        path = join(self.base_path,
-                    self._path_from_date(obj['date']))
+    def _write(self, obj, fold):
+        for i in range(fold):
+            path = join(self.base_path, str(i), (obj['ocid']))
+            if os.path.exists(path):
+                file_path = join(path, '{}.json'.format(obj['id']))
+                with open(file_path, 'w') as out:
+                    out.write(encoder(obj))
+                return
         if not os.path.exists(path):
             os.makedirs(path)
         file_path = join(path, '{}.json'.format(obj['id']))
@@ -101,11 +106,23 @@ class FSStorage(Storage):
                 ff = json.load(json_file)
             yield ff
 
-    def save(self, obj):
-        self._write(obj)
+    def save(self, obj, fold):
+        self._write(obj, fold)
 
     def get(self, key):
         path = self._find(key)
         if path:
             return self._load(path)
         raise DocumentNotFound
+
+    def ocid_walk(self):
+        base_path = os.path.join(self.base_path, 'releases')
+        for fold in range(len(os.listdir(base_path))):
+            for i in os.listdir((os.path.join(base_path, str(fold)))):
+                releases = []
+                for j in os.listdir((os.path.join(base_path, str(fold), str(i)))):
+                    path = os.path.join(
+                        base_path, str(fold), str(i), str(j))
+                    with open(path) as data_file:
+                        releases.append(json.load(data_file))
+                yield releases
