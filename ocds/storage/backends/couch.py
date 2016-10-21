@@ -2,7 +2,6 @@
 import couchdb
 from couchdb.design import ViewDefinition
 from .design.tenders import views as tenders_views
-from .design.releases import views as releases_views
 from ocds.storage.helpers import get_db_url
 from ocds.export.helpers import encoder, decoder
 from couchdb.json import use
@@ -15,7 +14,7 @@ use(decode=decoder, encode=encoder)
 
 class CouchStorage(Storage):
 
-    def __init__(self, config, views):
+    def __init__(self, config, views=tenders_views):
         url = get_db_url(
             config.get('username'),
             config.get('password'),
@@ -79,18 +78,4 @@ class TendersStorage(CouchStorage):
                                     100,
                                     startkey=datestart,
                                     endkey=datefinish):
-            yield row['value']
-
-
-class ReleasesStorage(CouchStorage):
-
-    def __init__(self, config):
-        super(ReleasesStorage, self).__init__(config, releases_views)
-
-    def __iter__(self):
-        for row in self.db.iterview('releases/docs', 100):
-            yield row['value']
-
-    def get_all(self):
-        for row in self.db.iterview('releases/docs', 100):
             yield row['value']
